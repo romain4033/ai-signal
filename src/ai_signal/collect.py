@@ -242,8 +242,11 @@ def read_hf_papers(client: httpx.Client, src: Source, start: datetime, end: date
             paper = p.get("paper", {})
             upvotes = paper.get("upvotes", 0) or 0
             arxiv_id = paper.get("id")
-            # Date d'arrivée dans les Daily Papers (sinon date de publication du papier)
-            published = parse_date(p.get("publishedAt")) or parse_date(paper.get("publishedAt"))
+            # Date d'arrivée dans les Daily Papers ; à défaut, midi du jour demandé
+            # (la date "publishedAt" est celle du papier sur arXiv, souvent bien plus ancienne).
+            published = (parse_date(paper.get("submittedOnDailyAt"))
+                         or parse_date(p.get("submittedOnDailyAt"))
+                         or datetime(day.year, day.month, day.day, 12, tzinfo=timezone.utc))
             if not arxiv_id or not published or upvotes < src.min_upvotes:
                 continue
             items.append(Item(

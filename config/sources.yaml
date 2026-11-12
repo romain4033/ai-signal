@@ -289,14 +289,16 @@ sources:
   # ═══════════ TIER 2 — Analyse ═══════════
 
   - name: Stanford HAI
-    url: https://hai.stanford.edu/news/rss.xml
-    method: rss
+    url: https://hai.stanford.edu/sitemap.xml
+    include: ["/news/"]
+    method: sitemap
     tier: 2
     categories: [research, policy]
 
   - name: Epoch AI
-    url: https://epoch.ai/blog/rss.xml
-    method: rss
+    url: https://epoch.ai/sitemap.xml
+    include: ["/blog/", "/gradient-updates/", "/data-insights/"]
+    method: sitemap
     tier: 2
     categories: [research, models]
 
@@ -308,7 +310,7 @@ sources:
     filter: ai
 
   - name: Import AI (Jack Clark)
-    url: https://importai.substack.com/feed
+    url: https://jack-clark.net/feed/
     method: rss
     tier: 2
     categories: [research, policy]
