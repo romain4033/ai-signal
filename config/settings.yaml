@@ -1,0 +1,90 @@
+# ─────────────────────────────────────────────────────────────
+#  AI Signal — réglages généraux
+#  Tu peux modifier ce fichier librement : il est relu à chaque exécution.
+#  Les lignes qui commencent par # sont des commentaires (ignorées).
+# ─────────────────────────────────────────────────────────────
+
+# Nom affiché sur la page web et dans l'email.
+name: "AI Signal"
+
+# Langue du contenu produit (page + email).
+language: en
+
+# Fréquence des éditions : "daily" (chaque jour) ou "weekly" (une fois par semaine).
+# ⚠️ Si tu changes ici, change aussi l'heure/le jour du cron dans
+#    .github/workflows/daily.yml (expliqué dans le README).
+frequency: daily
+
+# Fenêtre de collecte : de HH:00 UTC la veille à HH:00 UTC le jour J
+# (en "weekly" : de HH:00 UTC il y a 7 jours à HH:00 UTC aujourd'hui).
+# 8 h UTC = minuit sur la côte ouest des USA en hiver.
+window_cutoff_hour_utc: 8
+
+# Fuseau horaire utilisé seulement pour l'AFFICHAGE des dates.
+display_timezone: Europe/Paris
+
+# Nombre de sujets par édition.
+editions:
+  daily:
+    min_stories: 3        # en dessous → mention "Quiet day" (on ne remplit jamais pour remplir)
+    max_stories: 10
+    candidates: 15        # sujets envoyés à l'étape d'enquête (Sonnet)
+  weekly:
+    min_stories: 5
+    max_stories: 15
+    candidates: 25
+  radar_items_min: 3      # "On the radar" : liens courts secondaires
+  radar_items_max: 5
+
+# Seuil de score (0 à 10) au triage pour qu'un sujet devienne candidat.
+triage_min_score: 6
+
+# Modèles Claude (identifiants vérifiés sur la doc officielle le 2026-11-12).
+models:
+  triage: claude-haiku-5-5        # tri en masse, très peu cher
+  investigate: claude-sonnet-5-5  # enquête avec recherche/lecture web
+  edit: claude-sonnet-5-5         # rédaction finale
+
+# "Effort" = profondeur de réflexion du modèle (low | medium | high).
+# Plus haut = meilleure qualité mais plus de tokens (donc plus cher).
+effort:
+  triage: low
+  investigate: medium
+  edit: medium
+
+# Versions des outils web côté serveur Claude (avec filtrage dynamique).
+tools:
+  web_search: web_search_20260209
+  web_fetch: web_fetch_20260209
+
+# Garde-fous de coût (par exécution).
+budget:
+  max_web_searches_per_run: 15   # 10 $ les 1000 recherches → 0,15 $ max
+  max_fetches_per_run: 30        # web_fetch : pas de surcoût hors tokens
+  max_content_tokens: 12000      # taille max d'une page lue par web_fetch
+  max_cost_usd_per_run: 1.00     # au-delà : on arrête l'enquête et on publie ce qu'on a
+
+# Tarifs en dollars par MILLION de tokens (page officielle :
+# https://platform.claude.com/docs/en/about-claude/pricing — vérifiés le 2026-11-12).
+# Servent uniquement à ESTIMER le coût affiché dans les logs.
+pricing:
+  claude-haiku-5-5:              # prompts ≤ 100 000 tokens (nos lots restent en dessous)
+    input: 0.10
+    cache_write_5m: 0.125
+    cache_read: 0.01
+    output: 0.50
+  claude-sonnet-5-5:
+    input: 2.00
+    cache_write_5m: 2.50
+    cache_read: 0.10
+    output: 10.00
+  web_search_per_1000: 10.00
+
+# Email (les identifiants et le destinataire sont dans les secrets, pas ici).
+email:
+  enabled: true
+  smtp_host: smtp.gmail.com
+  smtp_port: 465
+
+# Adresse publique du site (GitHub Pages). Sert aux liens dans l'email.
+site_url: "https://romain4033.github.io/ai-signal"
