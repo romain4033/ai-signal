@@ -1,0 +1,40 @@
+# Workflow de test, lancé à la main (onglet Actions → "Manual check" → Run workflow).
+# Sert à vérifier la clé API et les sources sans publier quoi que ce soit.
+name: Manual check
+
+on:
+  workflow_dispatch:
+    inputs:
+      command:
+        description: "Commande à lancer"
+        type: choice
+        default: check-setup
+        options:
+          - check-setup
+          - check-sources
+          - collect-only
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e .
+      - name: Lancer la commande
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CMD: ${{ inputs.command }}
+        run: |
+          if [ "$CMD" = "check-setup" ]; then
+            python -m ai_signal check-setup --ping
+          else
+            python -m ai_signal "$CMD"
+          fi
