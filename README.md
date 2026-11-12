@@ -104,7 +104,23 @@ Tout se règle dans **`config/settings.yaml`**. Le fichier est commenté ligne p
 
 ---
 
-## 5. Organisation du projet
+## 5. Modifier les sources
+
+Les sources sont listées dans **`config/sources.yaml`**, avec des explications en tête de fichier.
+
+- **Désactiver une source** : ajoute la ligne `enabled: false` dans son bloc.
+- **Ajouter une source** : copie un bloc existant, puis change `name`, `url`, `tier` et `categories`. Utilise `method: rss` si le site a un flux RSS, sinon `sitemap` ou `web_search`.
+- **Vérifier tes changements** : lance la commande ci-dessous. Elle affiche une ligne par source : `OK` si la source répond, `!!` si elle est en erreur.
+
+```powershell
+python -m ai_signal check-sources
+```
+
+Tu peux aussi lancer ce test depuis GitHub, sans rien installer : onglet **Actions → Manual check → Run workflow**, choisis `check-sources`, puis ouvre le résultat.
+
+---
+
+## 6. Organisation du projet
 
 ```
 config/       réglages (settings.yaml) et sources (sources.yaml)

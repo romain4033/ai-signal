@@ -116,6 +116,7 @@ sources:
     method: rss
     tier: 1
     categories: [models, tools]
+    filter: ai
 
   - name: Meta AI Blog
     url: https://ai.meta.com/blog/
@@ -179,6 +180,7 @@ sources:
     method: rss
     tier: 1
     categories: [research]
+    note: renvoie parfois un flux invalide (erreur passagère, sans conséquence)
 
   - name: Nature — Machine learning
     url: https://www.nature.com/subjects/machine-learning.rss
@@ -296,9 +298,9 @@ sources:
     categories: [research, policy]
 
   - name: Epoch AI
-    url: https://epoch.ai/sitemap.xml
-    include: ["/blog/", "/gradient-updates/", "/data-insights/"]
-    method: sitemap
+    url: https://epoch.ai/blog
+    method: web_search
+    note: ni flux RSS ni sitemap exploitable (testé le 2026-11-12)
     tier: 2
     categories: [research, models]
 
