@@ -1,0 +1,346 @@
+# ─────────────────────────────────────────────────────────────
+#  AI Signal — liste des sources
+#
+#  Chaque source a :
+#    name        nom affiché
+#    url         adresse du flux (ou de l'API / du sitemap)
+#    tier        1 = primaire (labo, papier, texte officiel)
+#                2 = presse / analyse fiable
+#                3 = signal de découverte (jamais une source suffisante seule)
+#    categories  catégories probables : models, tools, agents, research, business, policy
+#    method      comment on lit la source :
+#                  rss              flux RSS ou Atom
+#                  sitemap          sitemap.xml du site (pour les sites sans RSS),
+#                                   filtré avec "include" (début de chemin d'URL)
+#                  arxiv            API arXiv
+#                  hn_algolia       API Hacker News (Algolia)
+#                  hf_papers        API Hugging Face Daily Papers
+#                  github_trending  page GitHub Trending
+#                  web_search       pas de flux : Claude cherche avec "site:" à l'étape d'enquête
+#    filter      (optionnel) "ai" = ne garder que les éléments qui parlent d'IA
+#                (utile pour les sources généralistes)
+#    date_lag_hours (optionnel) décale la fenêtre dans le passé (sources publiées en retard)
+#    enabled     (optionnel) false pour désactiver une source sans la supprimer
+#    note        (optionnel) commentaire libre
+#
+#  Pour AJOUTER une source : copie un bloc, change les valeurs, puis lance
+#     python -m ai_signal check-sources
+#  pour vérifier qu'elle répond.
+# ─────────────────────────────────────────────────────────────
+
+# Mots-clés utilisés par filter: ai (insensibles à la casse, mots entiers).
+ai_keywords:
+  - AI
+  - artificial intelligence
+  - machine learning
+  - deep learning
+  - neural
+  - LLM
+  - LLMs
+  - language model
+  - foundation model
+  - generative
+  - GenAI
+  - chatbot
+  - agent
+  - agents
+  - agentic
+  - GPT
+  - ChatGPT
+  - OpenAI
+  - Anthropic
+  - Claude
+  - Gemini
+  - DeepMind
+  - Llama
+  - Mistral
+  - DeepSeek
+  - Qwen
+  - transformer
+  - diffusion
+  - MCP
+  - inference
+  - fine-tuning
+  - RAG
+  - embedding
+  - embeddings
+  - copilot
+  - AI Act
+
+sources:
+
+  # ═══════════ TIER 1 — Labos et éditeurs ═══════════
+
+  - name: Anthropic News
+    url: https://www.anthropic.com/sitemap.xml
+    include: ["/news/"]
+    method: sitemap
+    tier: 1
+    categories: [models, tools, policy]
+    note: pas de flux RSS officiel → sitemap
+
+  - name: Anthropic Research
+    url: https://www.anthropic.com/sitemap.xml
+    include: ["/research/"]
+    method: sitemap
+    tier: 1
+    categories: [research, models]
+
+  - name: Anthropic Engineering
+    url: https://www.anthropic.com/engineering
+    method: web_search
+    tier: 1
+    categories: [agents, tools]
+    note: les articles Engineering ne sont pas dans le sitemap
+
+  - name: OpenAI News
+    url: https://openai.com/news/rss.xml
+    method: rss
+    tier: 1
+    categories: [models, tools, business]
+
+  - name: Google DeepMind Blog
+    url: https://deepmind.google/blog/rss.xml
+    method: rss
+    tier: 1
+    categories: [models, research]
+
+  - name: Google Research Blog
+    url: https://research.google/blog/rss/
+    method: rss
+    tier: 1
+    categories: [research]
+
+  - name: Google AI (The Keyword)
+    url: https://blog.google/technology/ai/rss/
+    method: rss
+    tier: 1
+    categories: [models, tools]
+
+  - name: Meta AI Blog
+    url: https://ai.meta.com/blog/
+    method: web_search
+    tier: 1
+    categories: [models, research]
+    note: pas de flux public
+
+  - name: Microsoft Research
+    url: https://www.microsoft.com/en-us/research/feed/
+    method: rss
+    tier: 1
+    categories: [research]
+
+  - name: NVIDIA Technical Blog
+    url: https://developer.nvidia.com/blog/feed
+    method: rss
+    tier: 1
+    categories: [tools, research]
+    filter: ai
+
+  - name: Mistral AI News
+    url: https://mistral.ai/sitemap.xml
+    include: ["/news/"]
+    method: sitemap
+    tier: 1
+    categories: [models, tools]
+
+  - name: Hugging Face Blog
+    url: https://huggingface.co/blog/feed.xml
+    method: rss
+    tier: 1
+    categories: [models, tools, research]
+
+  - name: AWS Machine Learning Blog
+    url: https://aws.amazon.com/blogs/machine-learning/feed/
+    method: rss
+    tier: 1
+    categories: [tools]
+
+  - name: Apple Machine Learning Research
+    url: https://machinelearning.apple.com/rss.xml
+    method: rss
+    tier: 1
+    categories: [research, models]
+
+  # ═══════════ TIER 1 — Recherche ═══════════
+
+  - name: arXiv (cs.AI, cs.LG, cs.CL)
+    url: http://export.arxiv.org/api/query
+    method: arxiv
+    tier: 1
+    categories: [research]
+    arxiv_categories: [cs.AI, cs.LG, cs.CL]
+    max_items: 300
+    date_lag_hours: 40
+    note: "publié avec ~1 jour de décalage (fenêtre décalée de 40 h) ; énorme volume, seuls les meilleurs scores du tri passent"
+
+  - name: Nature Machine Intelligence
+    url: https://www.nature.com/natmachintell.rss
+    method: rss
+    tier: 1
+    categories: [research]
+
+  - name: Nature — Machine learning
+    url: https://www.nature.com/subjects/machine-learning.rss
+    method: rss
+    tier: 1
+    categories: [research]
+
+  - name: Science
+    url: https://www.science.org/action/showFeed?type=etoc&feed=rss&jc=science
+    method: rss
+    tier: 1
+    categories: [research]
+    filter: ai
+
+  - name: JMLR
+    url: https://jmlr.org/jmlr.xml
+    method: rss
+    tier: 1
+    categories: [research]
+
+  # ═══════════ TIER 1 — Régulation ═══════════
+
+  - name: European Commission — Digital Strategy
+    url: https://digital-strategy.ec.europa.eu/en/rss.xml
+    method: rss
+    tier: 1
+    categories: [policy]
+    filter: ai
+
+  - name: EUR-Lex
+    url: https://eur-lex.europa.eu
+    method: web_search
+    tier: 1
+    categories: [policy]
+    note: pas de flux simple ; recherche ciblée si un texte IA est cité
+
+  - name: NIST News
+    url: https://www.nist.gov/news-events/news/rss.xml
+    method: rss
+    tier: 1
+    categories: [policy]
+    filter: ai
+
+  - name: UK AI Security Institute
+    url: https://www.gov.uk/government/organisations/ai-security-institute.atom
+    method: rss
+    tier: 1
+    categories: [policy]
+
+  - name: OECD.AI
+    url: https://oecd.ai
+    method: web_search
+    tier: 1
+    categories: [policy]
+
+  # ═══════════ TIER 2 — Presse ═══════════
+
+  - name: Reuters Technology
+    url: https://www.reuters.com/technology/
+    method: web_search
+    tier: 2
+    categories: [business, policy]
+    note: plus de flux RSS public
+
+  - name: AP News — AI
+    url: https://apnews.com/hub/artificial-intelligence
+    method: web_search
+    tier: 2
+    categories: [business, policy]
+
+  - name: MIT Technology Review — AI
+    url: https://www.technologyreview.com/topic/artificial-intelligence/feed
+    method: rss
+    tier: 2
+    categories: [models, research, policy]
+
+  - name: IEEE Spectrum — AI
+    url: https://spectrum.ieee.org/feeds/topic/artificial-intelligence.rss
+    method: rss
+    tier: 2
+    categories: [research, tools]
+
+  - name: Ars Technica — AI
+    url: https://arstechnica.com/ai/feed/
+    method: rss
+    tier: 2
+    categories: [models, tools, policy]
+
+  - name: The Verge — AI
+    url: https://www.theverge.com/rss/ai-artificial-intelligence/index.xml
+    method: rss
+    tier: 2
+    categories: [models, tools, business]
+
+  - name: Wired — AI
+    url: https://www.wired.com/feed/tag/ai/latest/rss
+    method: rss
+    tier: 2
+    categories: [business, policy]
+
+  - name: Financial Times — AI
+    url: https://www.ft.com/artificial-intelligence?format=rss
+    method: rss
+    tier: 2
+    categories: [business]
+    note: paywall → titres seulement
+
+  # ═══════════ TIER 2 — Analyse ═══════════
+
+  - name: Stanford HAI
+    url: https://hai.stanford.edu/news/rss.xml
+    method: rss
+    tier: 2
+    categories: [research, policy]
+
+  - name: Epoch AI
+    url: https://epoch.ai/blog/rss.xml
+    method: rss
+    tier: 2
+    categories: [research, models]
+
+  - name: Simon Willison's Weblog
+    url: https://simonwillison.net/atom/everything/
+    method: rss
+    tier: 2
+    categories: [tools, models]
+    filter: ai
+
+  - name: Import AI (Jack Clark)
+    url: https://importai.substack.com/feed
+    method: rss
+    tier: 2
+    categories: [research, policy]
+
+  # ═══════════ TIER 3 — Signaux (découverte uniquement) ═══════════
+
+  - name: Hacker News
+    url: https://hn.algolia.com/api/v1/search_by_date
+    method: hn_algolia
+    tier: 3
+    categories: [tools, models]
+    filter: ai
+    min_points: 100
+
+  - name: Hugging Face Daily Papers
+    url: https://huggingface.co/api/daily_papers
+    method: hf_papers
+    tier: 3
+    categories: [research]
+    min_upvotes: 10
+    note: chaque papier pointe vers arXiv (source primaire)
+
+  - name: GitHub Trending (Python)
+    url: https://github.com/trending/python?since=daily
+    method: github_trending
+    tier: 3
+    categories: [tools, agents]
+    filter: ai
+
+  - name: GitHub Trending (TypeScript)
+    url: https://github.com/trending/typescript?since=daily
+    method: github_trending
+    tier: 3
+    categories: [tools, agents]
+    filter: ai

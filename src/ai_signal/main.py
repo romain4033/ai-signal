@@ -73,6 +73,72 @@ def cmd_check_setup(args: argparse.Namespace) -> int:
     return 0 if ok else 1
 
 
+def _window(args: argparse.Namespace):
+    """Fenêtre de collecte : celle de l'édition (--date), ou les N dernières heures (--hours)."""
+    from datetime import timedelta
+
+    settings = load_settings()
+    if getattr(args, "hours", None):
+        end = datetime.now(timezone.utc)
+        return end - timedelta(hours=args.hours), end
+    return settings.window(args.date or _today_utc())
+
+
+def cmd_check_sources(args: argparse.Namespace) -> int:
+    """Teste toutes les sources et affiche leur statut."""
+    from ai_signal.collect import collect_all
+
+    start, end = _window(args)
+    print(f"Fenêtre : {start:%Y-%m-%d %H:%M} → {end:%Y-%m-%d %H:%M} UTC\n")
+    _, reports = collect_all(start, end)
+    print(f"{'':3} {'Source':42} {'T':1} {'Méthode':15} {'Lus':>4} {'Fen.':>4}  {'Plus récent':16}  Détail")
+    print("-" * 110)
+    for r in sorted(reports, key=lambda r: (r.tier, r.name)):
+        if not r.ok:
+            mark = "!! "
+        elif r.method == "web_search":
+            mark = " - "
+        elif r.total == 0:
+            mark = " ? "
+        else:
+            mark = "OK "
+        newest = f"{r.newest:%Y-%m-%d %H:%M}" if r.newest else ""
+        print(f"{mark:3} {r.name[:42]:42} {r.tier:1} {r.method:15} {r.total:>4} {r.in_window:>4}  "
+              f"{newest:16}  {r.error or f'{r.seconds}s'}")
+    ok = sum(r.ok and r.total > 0 for r in reports)
+    ko = [r.name for r in reports if not r.ok]
+    print(f"\n{ok} sources OK, {len(ko)} en erreur, "
+          f"{sum(r.method == 'web_search' for r in reports)} en recherche web.")
+    print("Légende : OK = répond · ?  = répond mais vide · !! = erreur · - = pas de flux (web_search)")
+    print("          Lus = éléments lus · Fen. = éléments gardés dans la fenêtre")
+    return 0
+
+
+def cmd_collect_only(args: argparse.Namespace) -> int:
+    """Affiche les éléments collectés dans la fenêtre, par source."""
+    from ai_signal.collect import collect_all
+
+    start, end = _window(args)
+    items, reports = collect_all(start, end)
+    print(f"Fenêtre : {start:%Y-%m-%d %H:%M} → {end:%Y-%m-%d %H:%M} UTC — {len(items)} éléments\n")
+    by_source: dict[str, list] = {}
+    for it in items:
+        by_source.setdefault(it.source, []).append(it)
+    for r in sorted(reports, key=lambda r: (r.tier, r.name)):
+        its = by_source.get(r.name)
+        if not its:
+            continue
+        print(f"── {r.name} (tier {r.tier}) — {len(its)}")
+        for it in sorted(its, key=lambda i: i.published, reverse=True)[: args.limit]:
+            extra = " · ".join(f"{k}={v}" for k, v in it.extra.items() if k != "hn_url")
+            print(f"   {it.published:%m-%d %H:%M}  {it.title[:95]}" + (f"  [{extra}]" if extra else ""))
+            print(f"                {it.url}")
+        if len(its) > args.limit:
+            print(f"   … et {len(its) - args.limit} autres")
+        print()
+    return 0
+
+
 def _not_yet(phase: int):
     def _cmd(args: argparse.Namespace) -> int:
         print(f"Cette commande sera disponible à la phase {phase}.")
@@ -94,8 +160,16 @@ def build_parser() -> argparse.ArgumentParser:
     r.add_argument("--date", type=date.fromisoformat, help="régénère une date passée (AAAA-MM-JJ)")
     r.set_defaults(func=_not_yet(4))
 
-    sub.add_parser("collect-only", help="debug : affiche les éléments collectés").set_defaults(func=_not_yet(2))
-    sub.add_parser("check-sources", help="teste tous les flux").set_defaults(func=_not_yet(2))
+    for name, func, help_ in [
+        ("check-sources", cmd_check_sources, "teste tous les flux et affiche leur statut"),
+        ("collect-only", cmd_collect_only, "debug : affiche les éléments collectés"),
+    ]:
+        c = sub.add_parser(name, help=help_)
+        c.add_argument("--date", type=date.fromisoformat, help="fenêtre de l'édition de cette date")
+        c.add_argument("--hours", type=int, help="fenêtre glissante : les N dernières heures")
+        if name == "collect-only":
+            c.add_argument("--limit", type=int, default=8, help="éléments affichés par source")
+        c.set_defaults(func=func)
     return p
 
 
